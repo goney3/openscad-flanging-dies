@@ -2,6 +2,8 @@
 
 Create perfect, aerospace-grade flanges on your sheet metal lightening holes without spending hundreds of dollars on custom tooling! Now in three shape types: Circle, Stadium, Oval
 
+<img width="200" alt="image" src="https://github.com/user-attachments/assets/a0579dcc-5e84-4b1a-963d-bacdbf48ed11" /><img width="200" alt="image" src="https://github.com/user-attachments/assets/74eea718-841c-4895-87ba-c5d480755082" /><img width="200" alt="image" src="https://github.com/user-attachments/assets/237cfc37-e1c0-4fff-91ec-fceda8d7ae4f" />
+
 These 3D-printable, self-centering flanging dies are designed specifically for thin aluminum (defaulted for 0.016" / 26-gauge) but can be fully customized for your specific scratch-build or sheet metal project.
 
 **How it Works:**
@@ -10,13 +12,13 @@ No arbor press or bench vise is required! The male die features a built-in pilot
 **Fully Customizable in OpenSCAD:**
 This is a parametric model. Simply open the .scad file in OpenSCAD (free software) and use the built-in Customizer menu to easily adjust the tool to your exact needs:
 
-*Hole Diameter: Match your laser-cut or hole-sawed blanks.
-*Flange Angle: Default is 45° (ideal for thin aluminum to prevent tearing).
-*Flange Width & Bend Radius
-*Bolt Diameter: Size the center hole for whatever hardware you have on hand.
-*Base Thickness & Wall Width
-*Die Clearance: Defaulted to 0.015" to prevent binding on uncalibrated 3D printers.
-*Resolution/Smoothness: Adjust the polygon count for perfectly smooth curves.
+* Hole Diameter: Match your laser-cut or hole-sawed blanks.
+* Flange Angle: Default is 45° (ideal for thin aluminum to prevent tearing).
+* Flange Width & Bend Radius
+* Bolt Diameter: Size the center hole for whatever hardware you have on hand.
+* Base Thickness & Wall Width
+* Die Clearance: Defaulted to 0.015" to prevent binding on uncalibrated 3D printers.
+* Resolution/Smoothness: Adjust the polygon count for perfectly smooth curves.
 
 **Recommended 3D Print Settings:**
 To ensure the dies survive the immense crushing pressure of the bolt, you must print them for compression strength. Standard PLA or PETG filament works perfectly fine for this if sliced correctly!
