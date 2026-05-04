@@ -1,0 +1,165 @@
+/* ==========================================================
+   SELF-CENTERING FLANGING DIES
+   Designed for 0.016" Aluminum Ribs
+   ========================================================== */
+
+/*[Shape Settings]*/
+// 1 = Circular, 2 = Stadium (Straight Edges), 3 = True Oval (Elliptical)
+Shape_Type = 1; //[1:Circular, 2:Stadium, 3:True Oval]
+// Stretch factor for Stadium or Oval (e.g., 1.5 = 50% longer)
+Stretch_Factor = 1.5; //[1.0:0.1:3.0]
+
+/*[Hole & Metal Settings] */
+// Diameter of the lightening hole (inches)
+Hole_Diameter = 3.0; 
+// Thickness of the aluminum sheet (inches)
+Metal_Thickness = 0.016; 
+
+/*[Flange Dimensions] */
+// Angle of the flange (45 to 60 is best for 0.016" aluminum)
+Flange_Angle = 45; //[15:80]
+// How wide the flanged lip will be (inches)
+Flange_Width = 0.25; 
+// Radius of the bend/fillet (inches)
+Bend_Radius = 0.125; 
+
+/*[Die & Hardware Settings] */
+// Diameter of the center bolt used to squeeze the dies (inches)
+Bolt_Diameter = 0.375; // Default 3/8" bolt
+// Thickness of the plastic base plates (inches)
+Base_Thickness = 0.75; // Thick enough for heavy bolt pressure
+// Width of the plastic wall around the outside of the flange (inches)
+Wall_Width = 0.5; 
+// Extra gap to prevent binding on uncalibrated 3D printers (0.015" is very safe)
+Die_Clearance = 0.015; 
+
+/*[Render Settings] */
+// Higher numbers make a smoother circle, lower numbers make polygons
+Smoothness = 430; //[50:10:800]
+// Export in millimeters? (Keep true for most 3D slicers)
+Export_in_MM = true; 
+
+/* ==========================================================
+   HIDDEN CALCULATIONS (Do not edit below this line)
+   ========================================================== */
+$fn = Smoothness; 
+scale_factor = Export_in_MM ? 25.4 : 1;
+
+r_in = (Hole_Diameter / 2) * scale_factor;
+f_w = Flange_Width * scale_factor;
+f_a = Flange_Angle;
+f_r = Bend_Radius * scale_factor;
+t = Metal_Thickness * scale_factor;
+c = Die_Clearance * scale_factor;
+bolt_r = (Bolt_Diameter / 2) * scale_factor;
+pilot_h = (Metal_Thickness * 4) * scale_factor; 
+
+run = f_w;
+rise = f_w * tan(f_a);
+r_out = r_in + run + (Wall_Width * scale_factor);
+
+// Ensure the base is always thick enough to hold the bolt washer
+h_base = max(Base_Thickness * scale_factor, rise + pilot_h + (0.375 * scale_factor));
+
+// The core shape of the flanging cone
+module male_cone_polygon() {
+    polygon([[0, 0],[r_in + run, 0],[r_in, rise],[0, rise]]);
+}
+
+// Rounds the corners of the cone perfectly
+module male_cone_shape() {
+    intersection() {
+        square([r_out, rise]);
+        offset(r=-f_r) offset(r=f_r) male_cone_polygon();
+    }
+}
+
+// Solid 2D profile of the male base block
+module male_base_profile() {
+    square([r_out, h_base]);
+}
+
+// Solid 2D profile of the male cone ONLY
+module male_cone_profile() {
+    translate([0, h_base]) male_cone_shape();
+}
+
+// Solid 2D profile of the male pilot step ONLY
+module male_pilot_profile() {
+    translate([0, h_base + rise]) square([max(0, r_in - c), pilot_h]); 
+}
+
+// Solid 2D profile of the female base block
+module female_base_block_profile() {
+    square([r_out, h_base]);
+}
+
+// Solid 2D profile of the female cutout (the negative space)
+module female_cutout_profile() {
+    difference() {
+        union() {
+            // Cutout for the male cone + metal thickness + clearance
+            translate([0, 0]) offset(r = t + c) male_cone_shape();
+            // Cutout for the pilot step 
+            translate([0, rise]) square([r_in + (t + c), pilot_h + (c * 4)]);
+        }
+        // Prevent the profile from crossing into negative X (required for rotate_extrude)
+        translate([-r_out*2, -r_out*2]) square([r_out*2, r_out*4]);
+    }
+}
+
+// --- 3D GENERATION ---
+
+// Applies the selected shape transformation to any 3D child object passed into it
+module apply_shape() {
+    if (Shape_Type == 1 || Stretch_Factor <= 1.001) {
+        // 1. Circular
+        children();
+    } else if (Shape_Type == 2) {
+        // 2. Stadium Shape (Hull between two split halves)
+        offset_val = (Hole_Diameter * Stretch_Factor - Hole_Diameter) / 2 * scale_factor;
+        hull() {
+            translate([-offset_val, 0, 0]) children();
+            translate([offset_val, 0, 0]) children();
+        }
+    } else if (Shape_Type == 3) {
+        // 3. True Oval Shape (Scaled Ellipse)
+        scale([Stretch_Factor, 1, 1]) children();
+    }
+}
+
+module male_die_final() {
+    difference() {
+        union() {
+            // By applying the shape to the base, cone, and pilot separately, 
+            // we prevent the hull() command from swallowing the flat lips and steps!
+            apply_shape() rotate_extrude(angle=360) male_base_profile();
+            apply_shape() rotate_extrude(angle=360) male_cone_profile();
+            apply_shape() rotate_extrude(angle=360) male_pilot_profile();
+        }
+        // Center hole for the bolt (oversized slightly for easy bolt insertion)
+        translate([0, 0, -1]) cylinder(r=bolt_r + (0.01 * scale_factor), h=h_base + rise + pilot_h + 2);
+    }
+}
+
+module female_die_final() {
+    // Flips the female die upside down so it prints flat on the bed without supports
+    translate([0, 0, h_base]) 
+    rotate([180, 0, 0]) 
+    difference() {
+        // The solid block
+        apply_shape() rotate_extrude(angle=360) female_base_block_profile();
+        // Subtract the negative space (cutout)
+        apply_shape() rotate_extrude(angle=360) female_cutout_profile();
+        // Center hole for the bolt
+        translate([0, 0, -1]) cylinder(r=bolt_r + (0.01 * scale_factor), h=h_base + 2);
+    }
+}
+
+// --- LAYOUT FOR PRINTING ---
+// Calculate the maximum width so the dies don't overlap on the build plate
+offset_val = (Shape_Type >= 2) ? (Hole_Diameter * Stretch_Factor - Hole_Diameter) / 2 * scale_factor : 0;
+actual_max_radius = (Shape_Type == 3) ? r_out * Stretch_Factor : r_out + offset_val;
+
+translate([-actual_max_radius - (0.25 * scale_factor), 0, 0]) female_die_final();
+translate([actual_max_radius + (0.25 * scale_factor), 0, 0]) male_die_final();
