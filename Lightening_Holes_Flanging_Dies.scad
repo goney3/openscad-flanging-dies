@@ -6,7 +6,7 @@
 // ==============================================================================
 // DISCLAIMER OF LIABILITY AND WARRANTY
 // ==============================================================================
-// This Parametric Airfoil Layout Tool is provided "AS IS", without warranty of 
+// This Self-Centering Flanging Dies Tool is provided "AS IS", without warranty of 
 // any kind, express or implied, including but not limited to the warranties of 
 // merchantability, fitness for a particular purpose, and noninfringement.
 //
